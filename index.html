@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planer Konwojów ETS2 - Polska Logistyka</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .panel {
+            background-color: #1a1a1a;
+            border: 3px solid #dc2626;
+            border-radius: 12px;
+            width: 460px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(220, 38, 38, 0.2);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #dc2626;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            background: linear-gradient(to bottom, #1a1a1a, #260505);
+            border-radius: 8px 8px 0 0;
+            padding-top: 5px;
+        }
+        .header h2 { margin: 0; color: #ffffff; font-size: 18px; text-shadow: 0 0 5px rgba(220,38,38,0.5); }
+        .header span { font-size: 12px; color: #dc2626; font-weight: bold; }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            color: #ccc;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background: #111;
+            color: #fff;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: #dc2626;
+            outline: none;
+        }
+        textarea {
+            resize: vertical;
+            height: 80px;
+        }
+        .btn {
+            background-color: #dc2626;
+            color: #ffffff;
+            border: 2px solid #b91c1c;
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+        .btn:hover { background-color: #ef4444; }
+        .btn-copy {
+            background-color: #ffffff;
+            color: #000000;
+            border: 2px solid #ffffff;
+        }
+        .btn-copy:hover { background-color: #e0e0e0; }
+
+        .output-box {
+            background-color: #111111;
+            border: 2px solid #333;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #ffffff;
+            font-size: 12px;
+            white-space: pre-wrap;
+            height: 320px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        .placeholder-text {
+            color: #666;
+            text-align: center;
+            margin-top: 120px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- PANEL FORMULARZA -->
+    <div class="panel">
+        <div class="header">
+            <h2>POLSKA LOGISTYKA</h2>
+            <span>PLANER KONWOJÓW ETS2</span>
+        </div>
+
+        <div class="form-group">
+            <label>Tytuł Konwoju:</label>
+            <input type="text" id="convoyTitle" placeholder="np. Oficjalny Konwój Międzymiastowy" value="Oficjalny Konwój Polska Logistyka">
+        </div>
+
+        <div class="form-group">
+            <label>Miejsce wyjazdu (Skąd):</label>
+            <input type="text" id="convoyFrom" placeholder="np. Berlin (Garaż)" value="Warszawa">
+        </div>
+
+        <div class="form-group">
+            <label>Miejsce docelowe (Dokąd):</label>
+            <input type="text" id="convoyTo" placeholder="np. Paryż (Firma LKW)" value="Berlin">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label>Data:</label>
+                <input type="date" id="convoyDate">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label>Godzina zbiórki:</label>
+                <input type="time" id="convoyTime" value="20:00">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Serwer / Tryb:</label>
+            <select id="convoyServer">
+                <option value="Simulation 1">Simulation 1 (TruckersMP - Standard)</option>
+                <option value="Simulation 2">Simulation 2 (TruckersMP - Standard)</option>
+                <option value="ProMods">ProMods (TruckersMP)</option>
+                <option value="ProMods Convoy">ProMods (Prywatne DLC Convoy)</option>
+                <option value="Arcade">Arcade (TruckersMP)</option>
+                <option value="Konwój Prywatny">Konwój Prywatny (Standard DLC Convoy)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Dodatkowe informacje (ładunek, ładowność, uwagi):</label>
+            <input type="text" id="convoyCargo" placeholder="np. Ładunek: Maszyny rolnicze (22t)" value="Ładunek: Sprzęt medyczny">
+        </div>
+
+        <div class="form-group">
+            <label>Notatki / Wymagania:</label>
+            <textarea id="convoyNotes">Wymagane pełne tankowanie, naprawiony ciągnik i kulturalna jazda zgodnie z przepisami TMP.</textarea>
+        </div>
+
+        <button class="btn" onclick="generateConvoy()">Generuj Opis Konwoju</button>
+    </div>
+
+    <!-- PANEL WYNIKOWY -->
+    <div class="panel">
+        <div class="header">
+            <h2>WYNIK GENERATORA</h2>
+            <span>Gotowy tekst do wklejenia</span>
+        </div>
+
+        <div class="output-box" id="outputBox">
+            <div class="placeholder-text">Wypełnij formularz po lewej stronie i kliknij "Generuj Opis Konwoju".</div>
+        </div>
+
+        <button class="btn btn-copy" onclick="copyToClipboard()">📋 Kopiuj tekst do schowka</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById('convoyDate').valueAsDate = new Date();
+
+    function generateConvoy() {
+        const title = document.getElementById('convoyTitle').value.trim();
+        const from = document.getElementById('convoyFrom').value.trim();
+        const to = document.getElementById('convoyTo').value.trim();
+        const date = document.getElementById('convoyDate').value;
+        const time = document.getElementById('convoyTime').value;
+        const server = document.getElementById('convoyServer').value;
+        const cargo = document.getElementById('convoyCargo').value.trim();
+        const notes = document.getElementById('convoyNotes').value.trim();
+
+        const formattedText = `🚚 **${title}** 🚚
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏢 **Firma:** Polska Logistyka
+📍 **Trasa:** ${from} ➡️ ${to}
+📅 **Data:** ${date}
+⏰ **Godzina zbiórki:** ${time}
+🌐 **Serwer / Tryb:** ${server}
+📦 **Dodatkowe info:** ${cargo}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 **Wymagania i uwagi:**
+${notes}
+
+Do zobaczenia na trasie! Szerokiej drogi! 🚛💨`;
+
+        document.getElementById('outputBox').innerText = formattedText;
+    }
+
+    function copyToClipboard() {
+        const outputBox = document.getElementById('outputBox');
+        const text = outputBox.innerText;
+
+        if (!text || text.includes('Wypełnij formularz')) {
+            alert('Najpierw wygeneruj opis konwoju!');
+            return;
+        }
+
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Tekst został pomyślnie skopiowany do schowka!');
+        }).catch(err => {
+            alert('Nie udało się skopiować tekstu.');
+        });
+    }
+
+    window.onload = generateConvoy;
+</script>
+
+</body>
+</html>
