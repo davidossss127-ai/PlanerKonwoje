@@ -18,7 +18,7 @@
         .container {
             display: flex;
             gap: 20px;
-            max-width: 1000px;
+            max-width: 1050px;
             width: 100%;
             justify-content: center;
             flex-wrap: wrap;
@@ -27,9 +27,10 @@
             background-color: #1a1a1a;
             border: 3px solid #dc2626;
             border-radius: 12px;
-            width: 460px;
+            width: 480px;
             padding: 20px;
             box-shadow: 0 10px 30px rgba(220, 38, 38, 0.2);
+            box-sizing: border-box;
         }
         .header {
             text-align: center;
@@ -69,7 +70,7 @@
         }
         textarea {
             resize: vertical;
-            height: 80px;
+            height: 60px;
         }
         .btn {
             background-color: #dc2626;
@@ -90,6 +91,12 @@
             border: 2px solid #ffffff;
         }
         .btn-copy:hover { background-color: #e0e0e0; }
+        .btn-discord {
+            background-color: #5865F2;
+            border: 2px solid #4752C4;
+            margin-top: 6px;
+        }
+        .btn-discord:hover { background-color: #4752C4; }
 
         .output-box {
             background-color: #111111;
@@ -100,7 +107,7 @@
             color: #ffffff;
             font-size: 12px;
             white-space: pre-wrap;
-            height: 320px;
+            height: 180px;
             overflow-y: auto;
             margin-bottom: 10px;
             box-sizing: border-box;
@@ -108,7 +115,24 @@
         .placeholder-text {
             color: #666;
             text-align: center;
-            margin-top: 120px;
+            margin-top: 60px;
+        }
+        .map-preview-container {
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .map-preview-container canvas {
+            max-width: 100%;
+            border: 2px solid #333;
+            border-radius: 6px;
+            background: #000;
+        }
+        .status-msg {
+            font-size: 11px;
+            text-align: center;
+            margin-top: 5px;
+            color: #10b981;
+            min-height: 15px;
         }
     </style>
 </head>
@@ -124,17 +148,17 @@
 
         <div class="form-group">
             <label>Tytuł Konwoju:</label>
-            <input type="text" id="convoyTitle" placeholder="np. Oficjalny Konwój Międzymiastowy" value="Oficjalny Konwój Polska Logistyka">
+            <input type="text" id="convoyTitle" value="Oficjalny Konwój Polska Logistyka">
         </div>
 
         <div class="form-group">
             <label>Miejsce wyjazdu (Skąd):</label>
-            <input type="text" id="convoyFrom" placeholder="np. Berlin (Garaż)" value="Warszawa">
+            <input type="text" id="convoyFrom" value="Warszawa">
         </div>
 
         <div class="form-group">
             <label>Miejsce docelowe (Dokąd):</label>
-            <input type="text" id="convoyTo" placeholder="np. Paryż (Firma LKW)" value="Berlin">
+            <input type="text" id="convoyTo" value="Berlin">
         </div>
 
         <div style="display: flex; gap: 10px;">
@@ -161,8 +185,8 @@
         </div>
 
         <div class="form-group">
-            <label>Dodatkowe informacje (ładunek, ładowność, uwagi):</label>
-            <input type="text" id="convoyCargo" placeholder="np. Ładunek: Maszyny rolnicze (22t)" value="Ładunek: Sprzęt medyczny">
+            <label>Dodatkowe informacje (ładunek, masa):</label>
+            <input type="text" id="convoyCargo" value="Ładunek: Sprzęt medyczny">
         </div>
 
         <div class="form-group">
@@ -170,26 +194,113 @@
             <textarea id="convoyNotes">Wymagane pełne tankowanie, naprawiony ciągnik i kulturalna jazda zgodnie z przepisami TMP.</textarea>
         </div>
 
-        <button class="btn" onclick="generateConvoy()">Generuj Opis Konwoju</button>
+        <button class="btn" onclick="generateConvoy()">Generuj Opis Konwoju i Mapkę</button>
     </div>
 
     <!-- PANEL WYNIKOWY -->
     <div class="panel">
         <div class="header">
             <h2>WYNIK GENERATORA</h2>
-            <span>Gotowy tekst do wklejenia</span>
+            <span>Podgląd trasy i wysyłka do Discorda</span>
+        </div>
+
+        <div class="map-preview-container">
+            <label style="margin-bottom: 2px; text-align: left;">Wygenerowana mapka trasy:</label>
+            <canvas id="routeCanvas" width="440" height="140"></canvas>
         </div>
 
         <div class="output-box" id="outputBox">
-            <div class="placeholder-text">Wypełnij formularz po lewej stronie i kliknij "Generuj Opis Konwoju".</div>
+            <div class="placeholder-text">Wypełnij formularz i kliknij przycisk generowania.</div>
         </div>
 
+        <div class="status-msg" id="statusMsg"></div>
+
         <button class="btn btn-copy" onclick="copyToClipboard()">📋 Kopiuj tekst do schowka</button>
+        <button class="btn btn-discord" onclick="sendToDiscord()">🚀 Wyślij ogłoszenie + mapkę na Discorda</button>
     </div>
 </div>
 
 <script>
     document.getElementById('convoyDate').valueAsDate = new Date();
+    
+    const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1554000079545704519/lFXmXqngtC-1_stCXmfQ5yQiA0LkdjMJkL5z3SWHJ7O9waneBh-5MwGzSKmR1X2M7ubE";
+
+    let generatedBlob = null;
+
+    function generateMapImage(from, to, title) {
+        const canvas = document.getElementById('routeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < canvas.width; x += 30) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+        }
+        for (let y = 0; y < canvas.height; y += 30) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+        }
+
+        const startX = 70;
+        const startY = 85;
+        const endX = 370;
+        const endY = 85;
+
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 6;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.bezierCurveTo(220, 20, 220, 140, endX, endY);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#93c5fd';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.bezierCurveTo(220, 20, 220, 140, endX, endY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#10b981';
+        ctx.beginPath();
+        ctx.arc(startX, startY, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.arc(endX, endY, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 13px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.fillText(from.toUpperCase(), startX, startY + 30);
+        ctx.fillText(to.toUpperCase(), endX, endY + 30);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = 'bold 11px Segoe UI';
+        ctx.textAlign = 'left';
+        ctx.fillText("TRASA KONWOJU: " + title, 15, 25);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🚚', 220, 68);
+
+        canvas.toBlob((blob) => {
+            generatedBlob = blob;
+        }, 'image/png');
+    }
 
     function generateConvoy() {
         const title = document.getElementById('convoyTitle').value.trim();
@@ -200,6 +311,8 @@
         const server = document.getElementById('convoyServer').value;
         const cargo = document.getElementById('convoyCargo').value.trim();
         const notes = document.getElementById('convoyNotes').value.trim();
+
+        generateMapImage(from, to, title);
 
         const formattedText = `🚚 **${title}** 🚚
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -216,6 +329,8 @@ ${notes}
 Do zobaczenia na trasie! Szerokiej drogi! 🚛💨`;
 
         document.getElementById('outputBox').innerText = formattedText;
+        document.getElementById('statusMsg').innerText = '✅ Wygenerowano opis i mapkę trasy!';
+        document.getElementById('statusMsg').style.color = '#10b981';
     }
 
     function copyToClipboard() {
@@ -232,6 +347,72 @@ Do zobaczenia na trasie! Szerokiej drogi! 🚛💨`;
         }).catch(err => {
             alert('Nie udało się skopiować tekstu.');
         });
+    }
+
+    async function sendToDiscord() {
+        const outputBox = document.getElementById('outputBox');
+        const text = outputBox.innerText;
+        const statusMsg = document.getElementById('statusMsg');
+
+        if (!text || text.includes('Wypełnij formularz')) {
+            alert('Najpierw wygeneruj opis konwoju!');
+            return;
+        }
+
+        statusMsg.style.color = "#f59e0b";
+        statusMsg.innerText = "Wysyłanie na Discorda z mapką i przyciskami obecności...";
+
+        try {
+            const formData = new FormData();
+            
+            // Konfiguracja wiadomości wraz z interaktywnymi komponentami Discorda (przyciski obecności)
+            const payload = {
+                content: text,
+                components: [
+                    {
+                        type: 1, // Action Row
+                        components: [
+                            {
+                                type: 2, // Button
+                                style: 3, // Success (Zielony)
+                                label: "Będę",
+                                custom_id: "convoy_attending_yes",
+                                emoji: { name: "✅" }
+                            },
+                            {
+                                type: 2, // Button
+                                style: 4, // Danger (Czerwony)
+                                label: "Nie będzie mnie",
+                                custom_id: "convoy_attending_no",
+                                emoji: { name: "❌" }
+                            }
+                        ]
+                    }
+                ]
+            };
+            
+            formData.append('payload_json', JSON.stringify(payload));
+            
+            if (generatedBlob) {
+                formData.append('file', generatedBlob, 'trasa_konwoju.png');
+            }
+
+            const response = await fetch(DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok || response.status === 204) {
+                statusMsg.style.color = "#10b981";
+                statusMsg.innerText = "✅ Konwój wraz z mapą i przyciskami obecności został wysłany!";
+            } else {
+                throw new Error('Błąd serwera Discord');
+            }
+        } catch (error) {
+            statusMsg.style.color = "#ef4444";
+            statusMsg.innerText = "❌ Błąd wysyłania. Sprawdź konsolę przeglądarki.";
+            console.error(error);
+        }
     }
 
     window.onload = generateConvoy;
